@@ -1,7 +1,12 @@
 {
   "name": "CRD-VPS",
   "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
-  "onCreateCommand": "bash .devcontainer/postCreate.sh",
   "remoteUser": "codespace",
-  "overrideCommand": false
+  "overrideCommand": false,
+  "customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": []
+    }
+  }
 }
