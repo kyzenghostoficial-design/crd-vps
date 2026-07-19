@@ -1,41 +1,46 @@
 #!/bin/bash
-# Always exit 0 so container never enters recovery mode
-set +e
+# CRD-VPS Setup Script
+# This runs when you open the terminal for the first time
+set -e
 export DEBIAN_FRONTEND=noninteractive
-LOG=/tmp/crd-setup.log
 
-echo "=== CRD-VPS Setup ===" | tee $LOG
-sudo apt-get update -qq >> $LOG 2>&1 || true
+echo ""
+echo "============================================"
+echo "  CRD-VPS: Instalando tudo automaticamente"
+echo "============================================"
+echo ""
 
-echo "Installing XFCE4..." | tee -a $LOG
-sudo apt-get install -y --no-install-recommends xfce4 xfce4-terminal dbus-x11 wget >> $LOG 2>&1 || true
+sudo apt-get update -qq
 
-echo "Installing Google Chrome..." | tee -a $LOG
-wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/chrome.deb >> $LOG 2>&1 || true
-sudo apt-get install -y /tmp/chrome.deb >> $LOG 2>&1 || sudo apt-get -f install -y >> $LOG 2>&1 || true
+echo "[1/4] Instalando XFCE4..."
+sudo apt-get install -y --no-install-recommends xfce4 xfce4-terminal dbus-x11 wget 2>/dev/null
 
-echo "Installing Chrome Remote Desktop..." | tee -a $LOG
-wget -q https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb -O /tmp/crd.deb >> $LOG 2>&1 || true
-sudo apt-get install -y /tmp/crd.deb >> $LOG 2>&1 || sudo apt-get -f install -y >> $LOG 2>&1 || true
+echo "[2/4] Instalando Google Chrome..."
+wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/chrome.deb
+sudo apt-get install -y /tmp/chrome.deb 2>/dev/null || sudo apt-get -f install -y 2>/dev/null
 
-echo "exec /usr/bin/xfce4-session" | sudo tee /etc/chrome-remote-desktop-session >> $LOG 2>&1 || true
+echo "[3/4] Instalando Chrome Remote Desktop..."
+wget -q https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb -O /tmp/crd.deb
+sudo apt-get install -y /tmp/crd.deb 2>/dev/null || sudo apt-get -f install -y 2>/dev/null
 
-sudo tee /usr/local/bin/setup-crd > /dev/null << 'EOF'
-#!/bin/bash
-DISPLAY= /opt/google/chrome-remote-desktop/start-host \
-  --code="$1" \
-  --redirect-url="https://remotedesktop.google.com/_/oauthredirect" \
-  --name=$(hostname) && echo "Conecte pelo app Chrome Remote Desktop no celular!"
-EOF
-sudo chmod +x /usr/local/bin/setup-crd || true
+echo "[4/4] Configurando sessao XFCE..."
+echo "exec /usr/bin/xfce4-session" | sudo tee /etc/chrome-remote-desktop-session
 
+# If CRD_AUTH_CODE secret is set, configure automatically
 if [ -n "$CRD_AUTH_CODE" ]; then
-  echo "Auto-configure CRD..." | tee -a $LOG
+  echo ""
+  echo "Configurando Chrome Remote Desktop com seu codigo..."
   DISPLAY= /opt/google/chrome-remote-desktop/start-host \
     --code="$CRD_AUTH_CODE" \
     --redirect-url="https://remotedesktop.google.com/_/oauthredirect" \
-    --name=$(hostname) >> $LOG 2>&1 || echo "Code expired" | tee -a $LOG
+    --name=$(hostname) && echo "CRD configurado!" || echo "Codigo expirado - use setup-crd NOVO_CODIGO"
 fi
 
-echo "=== DONE ===" | tee -a $LOG
-exit 0
+# Mark as done so it doesn't run again
+touch /tmp/.crd_setup_done
+
+echo ""
+echo "============================================"
+echo "  PRONTO! Abra o app Chrome Remote Desktop"
+echo "  no celular e conecte com seu PIN!"
+echo "============================================"
