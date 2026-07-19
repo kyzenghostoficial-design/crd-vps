@@ -1,4 +1,4 @@
-name: Setup CRD
+name: CRD Setup
 on:
   workflow_dispatch:
     inputs:
@@ -6,34 +6,26 @@ on:
         description: 'Google Auth Code'
         required: true
       crd_pin:
-        description: 'PIN (6+ digits)'
+        description: 'PIN'
         required: true
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
+  crd:
+    runs-on: ubuntu-22.04
     steps:
-      - name: Install XFCE4 + Chrome + CRD
+      - name: Setup CRD
         run: |
           export DEBIAN_FRONTEND=noninteractive
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends xfce4 xfce4-terminal dbus-x11 wget
-          wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/chrome.deb
-          sudo apt-get install -y /tmp/chrome.deb || sudo apt-get -f install -y
+          sudo apt-get install -y xfce4 xfce4-terminal dbus-x11 wget
+          wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/c.deb
+          sudo apt-get install -y /tmp/c.deb || sudo apt-get -f install -y
           wget -q https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb -O /tmp/crd.deb
           sudo apt-get install -y /tmp/crd.deb || sudo apt-get -f install -y
           echo "exec /usr/bin/xfce4-session" | sudo tee /etc/chrome-remote-desktop-session
-
-      - name: Configure Chrome Remote Desktop
-        run: |
           DISPLAY= /opt/google/chrome-remote-desktop/start-host \
             --code="${{ github.event.inputs.crd_code }}" \
             --redirect-url="https://remotedesktop.google.com/_/oauthredirect" \
-            --name="github-vps"
-
-      - name: Keep alive (6 hours)
-        run: |
-          echo "VPS online! Conecte pelo Chrome Remote Desktop no celular."
-          echo "Esta VPS fica ativa por 6 horas."
+            --name="minha-vps"
+          echo "=== PRONTO ==="
           sleep 21600
